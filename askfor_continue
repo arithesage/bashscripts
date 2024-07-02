@@ -1,0 +1,11 @@
+#!/bin/bash
+
+read -p "Continue? (s|y/n) [n]: " proceed
+
+if [ "$proceed" == "y" ] || [ "$proceed" == "s" ];
+then
+    exit 0
+else
+    exit 1
+fi
+

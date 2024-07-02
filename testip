@@ -1,0 +1,19 @@
+#!/bin/bash
+
+IP=$1
+
+
+echo "Trying conecting to $1 ..."
+ping -c 1 $IP >/dev/null
+
+if [ "$?" == "1" ];
+then
+    echo "Cannot reach $1."
+    echo ""
+    exit 1
+else
+    echo "OK."
+    echo ""
+    exit 0
+fi
+

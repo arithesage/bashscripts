@@ -1,0 +1,17 @@
+#!/bin/bash
+
+PORT=$1
+
+function usage
+{
+    echo "Usage: check_port <port>"
+    echo "If the port is in use, it will be shown along with the program using it."
+    echo ""
+}
+
+
+if [ "$1" == "" ];
+then
+    sudo netstat -nlp | grep ${PORT}
+fi
+
