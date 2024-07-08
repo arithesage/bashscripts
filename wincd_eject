@@ -10,7 +10,7 @@ then
 fi
 
 
-dir_empty $WIN_D
+dir_empty "$WIN_D"
 
 if [ "$?" == "0" ];
 then
@@ -20,7 +20,7 @@ then
 fi
 
 echo "Ejecting CD in drive D..."
-fusermount -u $WIN_D
+fusermount -u "$WIN_D"
 
 if ! [ "$?" == "0" ];
 then

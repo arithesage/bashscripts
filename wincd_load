@@ -33,7 +33,7 @@ then
     exit 1
 fi
 
-dir_empty $WIN_D
+dir_empty "$WIN_D"
 
 if [ "$?" == "1" ];
 then
@@ -55,6 +55,7 @@ fuseiso "$ISO" "$WIN_D"
 if ! [ "$?" == "0" ];
 then
     echo "Failed loading ISO."
+    echo "If trying to load a .CUE/BIN image, load the .BIN part, not .CUE."
     echo ""
     exit 1
 fi

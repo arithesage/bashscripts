@@ -44,12 +44,12 @@ function install_activator
 
     ACTIVATOR=$WINEPREFIX/activate
 
-    echo "export WINEPREFIX=$WINEPREFIX" > $ACTIVATOR
-    echo "export WINEARCH=$WINEARCH" >> $ACTIVATOR
-    echo "export WIN_C=$WINEPREFIX/drive_c" >> $ACTIVATOR
-    echo "export WIN_D=$WINEPREFIX/drive_d" >> $ACTIVATOR
-    echo "echo \"WINE prefix '$WINEPREFIX' activated.\"" >> $ACTIVATOR
-    echo "echo \"\"" >> $ACTIVATOR
+    echo "export WINEPREFIX=\"$WINEPREFIX\"" > "$ACTIVATOR"
+    echo "export WINEARCH=$WINEARCH" >> "$ACTIVATOR"
+    echo "export WIN_C=\"$WINEPREFIX/drive_c\"" >> "$ACTIVATOR"
+    echo "export WIN_D=\"$WINEPREFIX/drive_d\"" >> "$ACTIVATOR"
+    echo "echo \"WINE prefix '$WINEPREFIX' activated.\"" >> "$ACTIVATOR"
+    echo "echo \"\"" >> "$ACTIVATOR"
 }
 
 
@@ -59,15 +59,7 @@ function finish
     echo "For using the new WINE prefix, do '. $PREFIXES_ROOT/$PREFIX_NAME/activate'"
     echo "or 'source $PREFIXES_ROOT/$PREFIX_NAME/activate'."
     echo ""
-    echo "Then, you can use 'winecfg' to configure the activated prefix,"
-    echo "'wine' for running programs, 'wine desktop', 'wine explorer' and"
-    echo "'wine regedit' for accesing these."
-    echo ""
-    echo "You can also use 'wincd_load' for easy loading an ISO file in D:"
-    echo "and 'wincd_eject' for ejecting it."
-    echo ""
-    echo "Finally, the WIN_C and WIN_D environment variables are available to quick"
-    echo "accessing to the prefix C: and D: drives respectively."
+    echo "Execute win_help for more details."
     echo ""
     echo "Happy windowing!"
     echo ""
@@ -88,6 +80,17 @@ export PREFIX_NAME=$1
 if ! [ "$WIN_ROOT" == "" ] && [ -d "$WIN_ROOT" ];
 then
     export PREFIXES_ROOT=$WIN_ROOT
+
+    touch "$PREFIXES_ROOT/touched"
+
+    if ! [ "$?" == "0" ];
+    then
+        echo "ERROR: Cannot write in '$PREFIXES_ROOT'"
+	echo ""
+	exit 1
+    else
+        rm "$PREFIXES_ROOT/touched"
+    fi
 else
     export PREFIXES_ROOT=$HOME/.local/share/wineprefixes
 fi
