@@ -1,0 +1,109 @@
+#!/bin/bash
+
+if [ "$1" == "-dir" ] && [ -d "$2" ];
+then
+    ROOT_DIR=$2
+else
+    ROOT_DIR=$(realpath $(dirname $0))
+fi
+
+
+RA_CONFIG_FILE="${ROOT_DIR}/retroarch.cfg"
+RA_CONFIG_DIR="${ROOT_DIR}/retroarch/config"
+
+if [ "$RA_FOCUS_KEY" == "" ];
+then
+    RA_FOCUS_KEY="tilde"
+fi
+
+if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
+then
+    source "${ROOT_DIR}/retrosystem.cfg"
+fi
+
+if ! [ "$RA_CORE_NAME" == "" ];
+then
+    if ! [ "RA_CORES_PATH" == "" ]
+    then
+        RA_CORE="${RA_CORES_PATH}"
+    fi
+
+    RA_CORE+="${RA_CORE_NAME}_libretro.so"
+fi
+
+if [ "$DEBUG" == "" ];
+then
+    DEBUG=0
+fi
+
+
+
+
+CONFIG=("rgui_config_directory = \"${RA_CONFIG_DIR}\"")
+
+if ! [ "$RA_HOME_DIR" == "" ];
+then
+    CONFIG+=("rgui_browser_directory = \"${RA_HOME_DIR}\"")
+fi
+
+if ! [ "$RA_SYSTEM_DIRNAME" == "" ];
+then
+    CONFIG+=("system_directory = \"${ROOT_DIR}/${RA_SYSTEM_DIRNAME}\"")
+fi
+
+RA_DIRS=(${RA_CONFIG_DIR}/remaps)
+RA_DIRS+=(${ROOT_DIR}/retroarch/saves)
+RA_DIRS+=(${ROOT_DIR}/retroarch/states)
+RA_DIRS+=(${ROOT_DIR}/retroarch/playlists)
+
+CONFIG+=("input_remapping_directory = \"${RA_CONFIG_DIR}/remaps\"")
+CONFIG+=("savefile_directory = \"${ROOT_DIR}/retroarch/saves\"")
+CONFIG+=("savestate_directory = \"${ROOT_DIR}/retroarch/states\"")
+CONFIG+=("playlist_directory = \"${ROOT_DIR}/retroarch/playlists\"")
+CONFIG+=("input_game_focus_toggle = \"${RA_FOCUS_KEY}\"")
+
+if [ "$RA_FULLSCREEN" == "1" ];
+then
+    CONFIG+=("video_fullscreen = \"true\"")
+else
+    CONFIG+=("video_fullscreen = \"false\"")
+fi
+
+
+echo -n "" > "${RA_CONFIG_FILE}"
+
+for entry in "${CONFIG[@]}"
+do
+    echo $entry >> "${RA_CONFIG_FILE}"
+done
+
+
+for path in "${RA_DIRS[@]}"
+do
+    if ! [ -d "$path" ];
+    then
+        mkdir -p "$path"
+    fi
+done
+
+
+RA_OPTS=""
+
+if [ "$DEBUG" == "1" ];
+then
+    RA_OPTS+="-v "
+fi
+
+RA_OPTS+="--appendconfig=${RA_CONFIG_FILE} "
+
+if ! [ "$RA_CORE" == "" ];
+then
+    RA_OPTS+="-L ${RA_CORE} "
+fi
+
+if ! [ "$GAME" == "" ];
+then
+    RA_OPTS+="${GAME} "
+fi
+
+flatpak run --user org.libretro.RetroArch ${RA_OPTS}
