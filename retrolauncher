@@ -1,60 +1,226 @@
 #!/bin/bash
 
-if [ "$1" == "-dir" ] && [ -d "$2" ];
+# In our retrosystem.cfg we can set a SYSTEM_SUPPORTED_EXTS
+# array to tell the script the game formats this system supports.
+#
+# $1: The game file we want to load
+# $2: The array with the supported game formats
+# returns: 0 if the game is valid, 1 otherwise
+#
+function test_game_ext
+{
+    FILE=$1
+    SUPPORTED_FILE_EXTS=$2
+
+    for ext in "${SUPPORTED_FILE_EXTS[@]}";
+    do
+        if [[ "$FILE" == *.${ext} ]];
+        then
+            return 0
+        fi
+    done
+
+    echo "Game '${FILE}' is unsupported."
+    echo ""
+
+    return 1
+}
+
+
+
+
+if ! [ "$3" == "" ];
 then
-    ROOT_DIR=$2
+    if [ "$1" == "-dir" ] && [ -d "$2" ] && [ -f "$3" ];
+    then
+        # We are providing 3 params:
+        # - -dir: We are passing a dir path to be used as root dir
+        # - $2: This is the dir path to use as root dir
+        # - $3: This is a game to launch right after loading RetroArch
+        #
+
+        ROOT_DIR=$2
+        GAME=$3
+
+        if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
+        then
+            source "${ROOT_DIR}/retrosystem.cfg"
+        fi
+
+        if ! [ "$SYSTEM_SUPPORTED_EXTS" == "" ];
+        then
+            test_game_ext $GAME $SYSTEM_SUPPORTED_EXTS
+
+            if [ "$?" == "1" ];
+            then
+                exit 1
+            fi
+        fi
+    fi
+
+elif ! [ "$2" == "" ];
+then
+    # We are providing 2 params.
+    #
+    # This time we are only telling the script to use a dir path
+    # as the root dir.
+    #
+
+    if [ "$1" == "-dir" ] && [ -d "$2" ] ;
+    then
+        ROOT_DIR=$2
+    fi
+
 else
+    # If no root dir is given, the current script path will be used
+    # as the root dir.
+    #
+
     ROOT_DIR=$(realpath $(dirname $0))
+
+    if ! [ "$1" == "" ] && [ -f "$1" ];
+    then
+        # Even if we do not provide a root dir, we can tell the script to
+        # launch a game.
+        #
+
+        GAME=$1
+
+        if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
+        then
+            source "${ROOT_DIR}/retrosystem.cfg"
+        fi
+
+        if ! [ "$SYSTEM_SUPPORTED_EXTS" == "" ];
+        then
+            test_game_ext $GAME $SYSTEM_SUPPORTED_EXTS
+
+            if [ "$?" == "1" ];
+            then
+                exit 1
+            fi
+        fi
+    fi
+fi
+
+
+echo "Using '${ROOT_DIR}' as root dir."
+
+
+if ! [ "$GAME" == "" ] && ! [ "$RA_CORE_NAME" == "" ];
+then
+    if [ "$RA_CORE_NAME" == "" ];
+    then
+        echo "Cannot launch a game without knowing RA_CORE_NAME."
+        GAME=""
+    else
+        echo "Preparing to launch game '${GAME}' ..."
+    fi
 fi
 
 
 RA_CONFIG_FILE="${ROOT_DIR}/retroarch.cfg"
 RA_CONFIG_DIR="${ROOT_DIR}/retroarch/config"
 
-if [ "$RA_FOCUS_KEY" == "" ];
-then
-    RA_FOCUS_KEY="tilde"
-fi
 
-if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
+if [ -f "${ROOT_DIR}/retrosystem.cfg" ] && [ "$RA_SYSTEM_NAME" == "" ];
 then
+    # We use the RA_SYSTEM_NAME, set in the retrosystem.cfg, to check if we
+    # have already loaded a system config data
+    #
+
+    echo "Loading custom config '${ROOT_DIR}/retrosystem.cfg' ..."
+
     source "${ROOT_DIR}/retrosystem.cfg"
 fi
 
+
+if ! [ "$RA_SYSTEM_NAME" == "" ];
+then
+    echo "Loaded custom config for ${RA_SYSTEM_NAME} emulation."
+fi
+
+
+if [ "$RA_FOCUS_KEY" == "" ];
+then
+    # This is the key for switching between "game mode" and "normal mode"
+    # in RetroArch. Only when in "game mode" we can use the keys usually
+    # mapped as RetroArch hotkeys as regular keys.
+    #
+
+    RA_FOCUS_KEY="tilde"
+fi
+
+
 if ! [ "$RA_CORE_NAME" == "" ];
 then
-    if ! [ "RA_CORES_PATH" == "" ]
+    # If have setted a RA_CORE_NAME, the script will launch that core
+    # right after loading RetroArch. That name can be the core name,
+    # the lib file name or even the full lib path.
+    #
+
+    if ! [ "$RA_CORES_PATH" == "" ]
     then
+        # We can even set a custom path were core are downloaded
+        #
         RA_CORE="${RA_CORES_PATH}"
     fi
 
     RA_CORE+="${RA_CORE_NAME}_libretro.so"
+
+    if [ "$RA_CORES_PATH" == "" ];
+    then
+        echo "Using '${RA_CORE}' core."
+        echo "Cannot check if exists."
+
+    else
+        if ! [ -f "${RA_CORE}" ];
+        then
+            echo "Cannot find core '${RA_CORE}'"
+            echo "You will need to install it once in RetroArch."
+        else
+            echo "Using '${RA_CORE}' core."
+        fi
+    fi
 fi
+
 
 if [ "$DEBUG" == "" ];
 then
+    # Launch RetroArch with -v flag, for show verbose information.
+    #
     DEBUG=0
 fi
 
 
 
 
+# Here we start to add to the CONFIG array the fields our custom
+# retroarch.cfg will have. This config file will be appended to the
+# original retroarch.file located in retroarch/config folder.
+#
+
 CONFIG=("rgui_config_directory = \"${RA_CONFIG_DIR}\"")
 
-if ! [ "$RA_HOME_DIR" == "" ];
+if ! [ "$RA_HOME_PATH" == "" ];
 then
     CONFIG+=("rgui_browser_directory = \"${RA_HOME_DIR}\"")
 fi
 
-if ! [ "$RA_SYSTEM_DIRNAME" == "" ];
+if ! [ "$RA_SYSTEM_PATH" == "" ];
+then
+    CONFIG+=("system_directory = \"${RA_SYSTEM_PATH}\"")
+elif ! [ "$RA_SYSTEM_DIRNAME" == "" ];
 then
     CONFIG+=("system_directory = \"${ROOT_DIR}/${RA_SYSTEM_DIRNAME}\"")
 fi
+
 
 RA_DIRS=(${RA_CONFIG_DIR}/remaps)
 RA_DIRS+=(${ROOT_DIR}/retroarch/saves)
 RA_DIRS+=(${ROOT_DIR}/retroarch/states)
 RA_DIRS+=(${ROOT_DIR}/retroarch/playlists)
+
 
 CONFIG+=("input_remapping_directory = \"${RA_CONFIG_DIR}/remaps\"")
 CONFIG+=("savefile_directory = \"${ROOT_DIR}/retroarch/saves\"")
@@ -78,6 +244,9 @@ do
 done
 
 
+# If any of the setted paths does not exist, create it.
+#
+
 for path in "${RA_DIRS[@]}"
 do
     if ! [ -d "$path" ];
@@ -86,6 +255,9 @@ do
     fi
 done
 
+
+# Prepare the needed options for launching RetroArch.
+#
 
 RA_OPTS=""
 
@@ -105,5 +277,6 @@ if ! [ "$GAME" == "" ];
 then
     RA_OPTS+="${GAME} "
 fi
+
 
 flatpak run --user org.libretro.RetroArch ${RA_OPTS}
