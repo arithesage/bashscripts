@@ -66,9 +66,9 @@ then
     # as the root dir.
     #
 
-    if [ "$1" == "-dir" ] && [ -d "$2" ] ;
+    if [ "$1" == "-dir" ] || [ "$1" == "-d" ] && [ -d "$2" ] ;
     then
-        ROOT_DIR=$2
+        ROOT_DIR=$(realpath $(dirname $2))
     fi
 
 else
@@ -115,6 +115,17 @@ then
         GAME=""
     else
         echo "Preparing to launch game '${GAME}' ..."
+    fi
+else
+    if ! [ "$RA_CORE_NAME" == "" ] && [ "$GAME" == "" ];
+    then
+        if [[ $RA_CORE_NAME == gambatte* ]];
+        then
+            echo "Gambatte (Gameboy) core requires a game for launching."
+            echo ""
+
+            exit 1
+        fi
     fi
 fi
 
@@ -204,7 +215,7 @@ CONFIG=("rgui_config_directory = \"${RA_CONFIG_DIR}\"")
 
 if ! [ "$RA_HOME_PATH" == "" ];
 then
-    CONFIG+=("rgui_browser_directory = \"${RA_HOME_DIR}\"")
+    CONFIG+=("rgui_browser_directory = \"${RA_HOME_PATH}\"")
 fi
 
 if ! [ "$RA_SYSTEM_PATH" == "" ];
@@ -278,5 +289,14 @@ then
     RA_OPTS+="${GAME} "
 fi
 
+if [ "$RA_SHOW_CMDLINE" == "1" ];
+then
+    echo "Launching 'flatpak run --user org.libretro.RetroArch ${RA_OPTS}' ..."
+fi
 
-flatpak run --user org.libretro.RetroArch ${RA_OPTS}
+if [ "$RA_QUIET" == "1" ];
+then
+    flatpak run --user org.libretro.RetroArch ${RA_OPTS} &> /dev/null
+else
+    flatpak run --user org.libretro.RetroArch ${RA_OPTS}
+fi
