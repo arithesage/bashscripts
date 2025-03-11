@@ -3,7 +3,7 @@
 sudo steamos-readonly enable
 
 sudo pacman-key --init
-sudo pacman --populate archlinux
-sudo pacman --populate holo
+sudo pacman-key --populate archlinux
+sudo pacman-key --populate holo
 
 sudo steamos-readonly disable
