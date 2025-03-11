@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [ -f "~/.environment" ];
+then
+    ENV_FILE="~/.environment"
+else
+    ENV_FILE="~/.bashrc"
+fi
+
+SCRIPTS_DIR=$(realpath $(dirname $0))
+
+grep -q "source $SCRIPT_DIR" $ENV_FILE
+
+if [ "$?" == "0" ];
+then
+    echo "Scripts dir is already registered."
+    echo ""
+else
+    echo "source $SCRIPT_DIR" >> $ENV_FILE
+    
+    echo "Scripts dir registered in $ENV_FILE."
+    echo "Re-enter shell for load changes."
+    echo ""
+fi
