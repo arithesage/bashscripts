@@ -2,9 +2,9 @@
 
 if [ -f "~/.environment" ];
 then
-    ENV_FILE="~/.environment"
+    ENV_FILE=$HOME/.environment
 else
-    ENV_FILE="~/.bashrc"
+    ENV_FILE=$HOME/.bashrc
 fi
 
 SCRIPTS_DIR=$(realpath $(dirname $0))
@@ -16,8 +16,14 @@ then
     echo "Scripts dir is already registered."
     echo ""
 else
-    echo "source $SCRIPT_DIR" >> $ENV_FILE
-    
+    echo "export PATH=\$PATH:$SCRIPT_DIR" >> $ENV_FILE
+    echo "export PATH=\$PATH:$SCRIPT_DIR/qemu" >> $ENV_FILE
+
+    if [ -d "/home/deck" ];
+    then
+        echo "export PATH=\$PATH:$SCRIPT_DIR/steamos" >> $ENV_FILE
+    fi
+
     echo "Scripts dir registered in $ENV_FILE."
     echo "Re-enter shell for load changes."
     echo ""

@@ -1,0 +1,89 @@
+#!/bin/bash
+
+
+function abort
+{
+    MESSAGE=$1
+
+    if ! [ "$MESSAGE" == "" ];
+    then
+        echo "$MESSAGE"
+        echo ""
+    fi
+
+    exit 1
+}
+
+
+function usage
+{
+    echo "Usage: [opts] boot_os <os name> [-install|-opts]"
+    echo ""
+    echo "Boots a QEMU virtual machine with the recommended options for"
+    echo "the given OS. You can tweak these options setting environment"
+    echo "variables before executing command or exporting them."
+    echo ""
+    echo "if '-opts' is specified, a list of the available environment"
+    echo "variables will be printed."
+    echo ""
+}
+
+
+SCRIPT_DIR=$(realpath $(dirname $0))
+
+
+
+
+OS=("linux", "linux-i386", "win9x", "winxp")
+
+
+if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ];
+then
+    usage
+    abort
+fi
+
+
+for os in "${OS[@]}"
+do
+    if [ "$1" == "$os" ];
+    then
+        CHOSEN_OS=$os
+
+        echo "Preparing to boot a virtual machine for '$os' ..."
+        break
+    fi
+done
+
+
+if [ "$CHOSEN_OS" == "" ];
+then
+    abort "The OS '$1' isn't compatible. Sorry."
+fi
+
+
+if [ "$2" == "-opts" ];
+then
+    "$SCRIPT_DIR/boot_qemu_machine -opts"
+    abort
+fi
+
+
+if [ "$CHOSEN_OS" == "winxp" ] || [ "$CHOSEN_OS" == "linux-i386" ];
+then
+    export QVM_MACHINE="pc"
+    export QVM_ARCH="i386"
+    export QVM_CPU_SMP="2"
+    export QVM_CPU_CORES="2"
+    export QVM_RAM="2G"
+    export QVM_INCLUDE_USB="1"
+    export QVM_INCLUDE_NETWORK="1"
+
+    if [ "$2" == "-install" ];
+    then
+        export QVM_BOOT_ORDER="dc"
+    fi
+fi
+
+
+"$SCRIPT_DIR/boot_qemu_machine"

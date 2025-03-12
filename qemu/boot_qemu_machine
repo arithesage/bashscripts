@@ -16,20 +16,39 @@ function abort
 }
 
 
-if [ "$1" == "-h" ] || [ "$1" == "--help" ];
-then
+function print_opts
+{
+    echo ""
+}
+
+
+function usage
+{
+    echo "Usage: [opts] boot_qemu_machine [-opts]"
     echo "Launch a QEMU virtual machine."
     echo ""
-    echo "To configure the VM, you need to set some environment variables."
-    echo "Here are the ones used: "
-    echo "----------------------------------------------------------------"
-
-    echo "----------------------------------------------------------------"
+    echo "To configure the VM, you need to export some environment variables"
+    echo "or pass them before the script."
+    echo ""
+    echo "Passing '-opts' argument prints the available variables."
+    echo ""
     echo "You can also add whatever you want with the QVM_EXTRA_OPTS one."
     echo "Remember to separate each parameter with a space and every"
     echo "parameter option with a comma." 
     echo ""
+}
 
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ];
+then
+    usage
+    abort
+fi
+
+
+if [ "$1" == "-opts" ];
+then
+    print_opts
     abort
 fi
 
@@ -76,7 +95,7 @@ then
 fi
 
 
-if [ "$QVM_ARCH" == "$(uname -m)" ];
+if [ "$QVM_ARCH" == "$(uname -m)" ] && ! [ "$QVM_DISABLE_KVM" == "1" ];;
 then
     echo ""
     echo "The machine architecture matchs host's one."
