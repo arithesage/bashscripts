@@ -69,6 +69,34 @@ then
 fi
 
 
+if [ "$QVM_HDA" == "" ];
+then
+    echo "At least a harddisk (provided in QVM_HDA variable) is needed"
+    echo "for booting the virtual machine. Example: hdd.qcow2."
+    echo ""
+    echo "You can create one with qemu-img create -f qcow2 <filename> <size>."
+    echo "Example: qemu-img create -f qcow2 winxp.qcow2 64G"
+    echo ""
+
+    abort
+fi
+
+
+if [ "$2" == "-install" ];
+then
+    if [ "$QVM_CDROM" == "" ];
+    then
+        echo "For installing a OS, an install ISO must be provided"
+        echo "in QVM_CDROM variable."
+        echo ""
+
+        abort
+    fi
+
+    export QVM_BOOT_ORDER="dc"
+fi
+
+
 if [ "$CHOSEN_OS" == "winxp" ] || [ "$CHOSEN_OS" == "linux-i386" ];
 then
     export QVM_MACHINE="pc"
@@ -78,11 +106,6 @@ then
     export QVM_RAM="2G"
     export QVM_INCLUDE_USB="1"
     export QVM_INCLUDE_NETWORK="1"
-
-    if [ "$2" == "-install" ];
-    then
-        export QVM_BOOT_ORDER="dc"
-    fi
 fi
 
 
