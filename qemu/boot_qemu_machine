@@ -95,7 +95,7 @@ then
 fi
 
 
-if [ "$QVM_ARCH" == "$(uname -m)" ] && ! [ "$QVM_DISABLE_KVM" == "1" ];;
+if [ "$QVM_ARCH" == "$(uname -m)" ] && ! [ "$QVM_DISABLE_KVM" == "1" ];
 then
     echo ""
     echo "The machine architecture matchs host's one."

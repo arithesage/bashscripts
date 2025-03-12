@@ -1,0 +1,62 @@
+#!/bin/bash
+
+function abort
+{
+    if ! [ "$MESSAGE" == "" ];
+    then
+        echo "$MESSAGE"
+        echo ""
+    fi
+
+    exit 1
+}
+
+
+
+
+if [ -f "/usr/local/bin/unityhub" ];
+then
+    abort "It seems that Unity Hub is already installed..."
+fi
+
+
+if ! [ -f "/etc/apt/sources.list.d/unityhub.list" ];
+then
+    echo "Preparing APT ..."
+    echo "-----------------"
+    wget -q0 - https://hub.unity3d.com/linux/keys/public | gpg --dearmor | sudo tee /usr/share/keyrings/Unity_Technologies_ApS.gpg > /dev/null
+    sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/Unity_Technologies_ApS.gpg] https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list'
+
+    if [ "$?" == "1" ];
+    then
+        abort "Failed!"
+    fi
+
+    echo "Done."
+    echo ""
+fi
+
+
+echo "Refreshing APT database and installing Unity Hub..."
+echo "---------------------------------------------------"
+
+sudo apt update
+sudo apt install -y unityhub
+
+echo ""
+
+if [ "$?" == "1" ];
+then
+    abort "UnityHub installation failed!"
+fi
+
+
+echo "Unity Hub should be installed now."
+echo ""
+echo "First of all, you will have to create a Unity account and/or login it."
+echo -n "Next, you can need to activate your license "
+echo "(if it is a Personal one it will be free)."
+echo "Then you will be able to install and run your favourite Unity version."
+echo ""
+echo "Happy programming!"
+echo ""
