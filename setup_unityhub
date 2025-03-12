@@ -12,6 +12,13 @@ function abort
 }
 
 
+UNITY_HUB_REPO="https://hub.unity3d.com/linux/repos/deb"
+UNITY_GPG_URL="https://hub.unity3d.com/linux/keys/public"
+
+UNITY_HUB_LIST="/etc/apt/sources.list.d/unityhub.list"
+UNITY_HUB_LIST_TMP="/var/tmp/unityhub.list"
+UNITY_GPG_KEY="/usr/share/keyrings/Unity_Technologies_ApS.gpg"
+UNITY_GPG_TMP="/var/tmp/Unity_Technologies_ApS.gpg"
 
 
 if [ -f "/usr/local/bin/unityhub" ];
@@ -20,12 +27,35 @@ then
 fi
 
 
-if ! [ -f "/etc/apt/sources.list.d/unityhub.list" ];
+if ! [ -f "$UNITY_GPG_KEY" ] || 
+   ! [ -f "$UNITY_HUB_LIST" ];
 then
+    sudo rm "$UNITY_GPG_KEY"
+    sudo rm "$UNITY_HUB_LIST"
+    
     echo "Preparing APT ..."
     echo "-----------------"
-    wget -q0 - https://hub.unity3d.com/linux/keys/public | gpg --dearmor | sudo tee /usr/share/keyrings/Unity_Technologies_ApS.gpg > /dev/null
-    sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/Unity_Technologies_ApS.gpg] https://hub.unity3d.com/linux/repos/deb stable main" > /etc/apt/sources.list.d/unityhub.list'
+
+    wget $UNITY_GPG_URL -O $UNITY_GPG_TMP
+    
+    if [ "$?" == "1" ];
+    then
+        abort "Failed to download Unity Technologies GPG key."
+    fi
+
+    gpg --dearmor $UNITY_GPG_TMP
+    sudo mv $UNITY_GPG_TMP $UNITY_GPG_KEY
+    
+    if [ "$?" == "1" ];
+    then
+        abort "Failed to install Unity Technologies GPG key."
+    fi
+    
+    UNITY_HUB_LIST_ENTRY="deb [signed-by=$UNITY_GPG_KEY] "
+    UNITY_HUB_LIST_ENTRY+="$UNITY_HUB_REPO stable main"
+    
+    echo "$UNITY_HUB_LIST_ENTRY" > $UNITY_HUB_LIST_TMP
+    sudo mv $UNITY_HUB_LIST_TMP $UNITY_HUB_LIST
 
     if [ "$?" == "1" ];
     then
