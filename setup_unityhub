@@ -21,7 +21,7 @@ UNITY_GPG_KEY="/usr/share/keyrings/Unity_Technologies_ApS.gpg"
 UNITY_GPG_TMP="/var/tmp/Unity_Technologies_ApS.gpg"
 
 
-if [ -f "/usr/local/bin/unityhub" ];
+if [ -f "/usr/bin/unityhub" ];
 then
     abort "It seems that Unity Hub is already installed..."
 fi
@@ -30,8 +30,9 @@ fi
 if ! [ -f "$UNITY_GPG_KEY" ] || 
    ! [ -f "$UNITY_HUB_LIST" ];
 then
-    sudo rm "$UNITY_GPG_KEY"
-    sudo rm "$UNITY_HUB_LIST"
+    rm "$UNITY_GPG_TMP" &> /dev/null
+    sudo rm "$UNITY_GPG_KEY" &> /dev/null
+    sudo rm "$UNITY_HUB_LIST" &> /dev/null
     
     echo "Preparing APT ..."
     echo "-----------------"
@@ -44,7 +45,7 @@ then
     fi
 
     gpg --dearmor $UNITY_GPG_TMP
-    sudo mv $UNITY_GPG_TMP $UNITY_GPG_KEY
+    sudo mv ${UNITY_GPG_TMP}.gpg $UNITY_GPG_KEY
     
     if [ "$?" == "1" ];
     then
@@ -83,8 +84,8 @@ fi
 
 echo "Unity Hub should be installed now."
 echo ""
-echo "First of all, you will have to create a Unity account and/or login it."
-echo -n "Next, you can need to activate your license "
+echo "You will have to create a Unity account and/or login with it."
+echo -n "Next, you may need to activate your license "
 echo "(if it is a Personal one it will be free)."
 echo "Then you will be able to install and run your favourite Unity version."
 echo ""
