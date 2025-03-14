@@ -1,5 +1,19 @@
 #!/bin/bash
 
+function abort
+{
+    MESSAGE=$1
+
+    if ! [ "$MESSAGE" == "" ];
+    then
+        echo "$MESSAGE"
+        echo ""
+    fi
+
+    exit 1
+}
+
+
 # In our retrosystem.cfg we can set a SYSTEM_SUPPORTED_EXTS
 # array to tell the script the game formats this system supports.
 #
@@ -27,95 +41,74 @@ function test_game_ext
 }
 
 
+function usage
+{
+    echo "Usage: retrolauncher -d|ir <root dir> [game]"
+    echo "       retrolauncher [game]"
+    echo ""
+}
 
 
-if ! [ "$3" == "" ];
+
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ];
 then
-    if [ "$1" == "-dir" ] && [ -d "$2" ] && [ -f "$3" ];
-    then
-        # We are providing 3 params:
-        # - -dir: We are passing a dir path to be used as root dir
-        # - $2: This is the dir path to use as root dir
-        # - $3: This is a game to launch right after loading RetroArch
-        #
+    usage
+    abort
+fi
 
-        ROOT_DIR=$(realpath $2)
-        GAME=$3
 
-        if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
-        then
-            source "${ROOT_DIR}/retrosystem.cfg"
-        fi
-
-        if ! [ "$SYSTEM_SUPPORTED_EXTS" == "" ];
-        then
-            test_game_ext $GAME $SYSTEM_SUPPORTED_EXTS
-
-            if [ "$?" == "1" ];
-            then
-                exit 1
-            fi
-        fi
-    fi
-
-elif ! [ "$2" == "" ];
+if [ -e "$1" ];
 then
-    # We are providing 2 params.
-    #
-    # This time we are only telling the script to use a dir path
-    # as the root dir.
-    #
+    GAME=$1
+fi
 
-    if [ "$1" == "-dir" ] || [ "$1" == "-d" ] && [ -d "$2" ] ;
+
+if [ "$1" == "-d" ] || [ "$1" == "--dir" ];
+then
+    if [ -d "$2" ];
     then
         ROOT_DIR=$(realpath $2)
+
+        if [ -e "$3" ];
+        then
+            GAME=$3
+        fi
+
+    else
+        abort "Path '$2' do not exist."
     fi
 
 else
-    # If no root dir is given, the current script path will be used
-    # as the root dir.
-    #
-
     ROOT_DIR=$(realpath $(dirname $0))
-
-    if ! [ "$1" == "" ] && [ -f "$1" ];
-    then
-        # Even if we do not provide a root dir, we can tell the script to
-        # launch a game.
-        #
-
-        GAME=$1
-
-        if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
-        then
-            source "${ROOT_DIR}/retrosystem.cfg"
-        fi
-
-        if ! [ "$SYSTEM_SUPPORTED_EXTS" == "" ];
-        then
-            test_game_ext $GAME $SYSTEM_SUPPORTED_EXTS
-
-            if [ "$?" == "1" ];
-            then
-                exit 1
-            fi
-        fi
-    fi
 fi
 
 
 echo "Using '${ROOT_DIR}' as root dir."
 
 
-if [ -f "${ROOT_DIR}/retrosystem.cfg" ] && [ "$RA_SYSTEM_NAME" == "" ];
+if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
 then
-    # We use the RA_SYSTEM_NAME, set in the retrosystem.cfg, to check if we
-    # have already loaded a system config data
-    #
-
-    echo "Loading custom config '${ROOT_DIR}/retrosystem.cfg' ..."
-
     source "${ROOT_DIR}/retrosystem.cfg"
+
+    if ! [ "$RA_SYSTEM_NAME" == "" ];
+    then
+        echo "Loading custom config '${ROOT_DIR}/retrosystem.cfg' ..."
+    fi
+fi
+
+
+if ! [ "$GAME" == "" ];
+then
+    if ! [ "$SYSTEM_SUPPORTED_EXTS" == "" ];
+    then
+        test_game_ext $GAME $SYSTEM_SUPPORTED_EXTS
+
+        if [ "$?" == "1" ];
+        then
+            abort
+        fi
+    fi
 fi
 
 
@@ -281,22 +274,17 @@ RA_OPTS+="--appendconfig=${RA_CONFIG_FILE} "
 
 if ! [ "$RA_CORE" == "" ];
 then
-    RA_OPTS+="-L ${RA_CORE} "
-fi
-
-if ! [ "$GAME" == "" ];
-then
-    RA_OPTS+="${GAME} "
+    RA_OPTS+="-L $RA_CORE "
 fi
 
 if [ "$RA_SHOW_CMDLINE" == "1" ];
 then
-    echo "Launching 'flatpak run --user org.libretro.RetroArch ${RA_OPTS}' ..."
+    echo "Launching 'flatpak run --user org.libretro.RetroArch ${RA_OPTS} \"$GAME\"' ..."
 fi
 
 if [ "$RA_QUIET" == "1" ];
 then
-    flatpak run --user org.libretro.RetroArch ${RA_OPTS} &> /dev/null
+    flatpak run --user org.libretro.RetroArch $RA_OPTS "$GAME" &> /dev/null
 else
-    flatpak run --user org.libretro.RetroArch ${RA_OPTS}
+    flatpak run --user org.libretro.RetroArch $RA_OPTS "$GAME"
 fi
