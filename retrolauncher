@@ -39,7 +39,7 @@ then
         # - $3: This is a game to launch right after loading RetroArch
         #
 
-        ROOT_DIR=$2
+        ROOT_DIR=$(realpath $2)
         GAME=$3
 
         if [ -f "${ROOT_DIR}/retrosystem.cfg" ];
@@ -68,7 +68,7 @@ then
 
     if [ "$1" == "-dir" ] || [ "$1" == "-d" ] && [ -d "$2" ] ;
     then
-        ROOT_DIR=$(realpath $(dirname $2))
+        ROOT_DIR=$(realpath $2)
     fi
 
 else
@@ -107,7 +107,19 @@ fi
 echo "Using '${ROOT_DIR}' as root dir."
 
 
-if ! [ "$GAME" == "" ] && ! [ "$RA_CORE_NAME" == "" ];
+if [ -f "${ROOT_DIR}/retrosystem.cfg" ] && [ "$RA_SYSTEM_NAME" == "" ];
+then
+    # We use the RA_SYSTEM_NAME, set in the retrosystem.cfg, to check if we
+    # have already loaded a system config data
+    #
+
+    echo "Loading custom config '${ROOT_DIR}/retrosystem.cfg' ..."
+
+    source "${ROOT_DIR}/retrosystem.cfg"
+fi
+
+
+if ! [ "$GAME" == "" ];
 then
     if [ "$RA_CORE_NAME" == "" ];
     then
@@ -117,7 +129,7 @@ then
         echo "Preparing to launch game '${GAME}' ..."
     fi
 else
-    if ! [ "$RA_CORE_NAME" == "" ] && [ "$GAME" == "" ];
+    if ! [ "$RA_CORE_NAME" == "" ];
     then
         if [[ $RA_CORE_NAME == gambatte* ]];
         then
@@ -132,18 +144,6 @@ fi
 
 RA_CONFIG_FILE="${ROOT_DIR}/retroarch.cfg"
 RA_CONFIG_DIR="${ROOT_DIR}/retroarch/config"
-
-
-if [ -f "${ROOT_DIR}/retrosystem.cfg" ] && [ "$RA_SYSTEM_NAME" == "" ];
-then
-    # We use the RA_SYSTEM_NAME, set in the retrosystem.cfg, to check if we
-    # have already loaded a system config data
-    #
-
-    echo "Loading custom config '${ROOT_DIR}/retrosystem.cfg' ..."
-
-    source "${ROOT_DIR}/retrosystem.cfg"
-fi
 
 
 if ! [ "$RA_SYSTEM_NAME" == "" ];
