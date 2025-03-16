@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "Check \$?. If 0, you are in X11."
+echo ""
+
+if [ "$XDG_SESSION_TYPE" == "x11" ];
+then
+    exit 0
+else
+    exit 1
+fi

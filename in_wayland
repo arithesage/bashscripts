@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "Check \$?. If 0, you are in Wayland."
+echo ""
+
+if [ "$XDG_SESSION_TYPE" == "wayland" ];
+then
+    exit 0
+else
+    exit 1
+fi
