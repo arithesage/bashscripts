@@ -81,6 +81,42 @@ then
     abort "UnityHub installation failed!"
 fi
 
+if ! [ -d "$HOME/.dotnet" ];
+then
+    echo "Dotnet will be installed now because it may be needed."
+    echo ""
+
+    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+
+    if [ "$?" == "1" ];
+    then
+        echo "Failed. It is recommended to install later."
+        echo "Flease, run 'download_dotnet-installer' manually."
+
+        echo "#!/bin/bash" > download_dotnet-installer
+        echo "wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh" >> download_dotnet-installer
+        chmod +x download_dotnet-installer
+    else
+        chmod +x dotnet-install.sh
+        ./dotnet-install.sh
+
+        if [ "$?" == "1" ];
+        then
+            echo "Failed. Run the 'dotnet-install.sh' script again."
+            echo ""
+        else
+            if [ -f "$HOME/.environment" ];
+            then
+                echo "export PATH=\$HOME/.dotnet:\$PATH" >> "$HOME/.environment"
+                echo "Added the .dotnet folder to the PATH via \$HOME/.environment"
+            else
+                echo "export PATH=\$HOME/.dotnet:\$PATH" >> "$HOME/.bashrc"
+                echo "Added the .dotnet folder to the PATH via \$HOME/.bashrc"
+            fi
+        fi
+    fi
+fi
+
 
 echo "Unity Hub should be installed now."
 echo ""
