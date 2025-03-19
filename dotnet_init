@@ -41,6 +41,39 @@ create_run_script ()
 }
 
 
+install_dotnet ()
+{
+    echo "Installing DotNet ..."
+    echo "---------------------"
+
+    wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
+
+    if [ "$?" == "1" ];
+    then
+        echo "Failed downloading."
+        echo ""
+
+        return 1
+    fi
+
+    chmod +x dotnet-install.sh
+    ./dotnet-install.sh
+
+    if [ "$?" == "1" ];
+    then
+        echo "Failed installing DotNet."
+        echo ""
+
+        return 1
+    fi
+
+    echo "Done!"
+    echo ""
+
+    return 0
+}
+
+
 usage ()
 {
     echo "Usage: dotnet_init <project name> [project type]"
@@ -66,10 +99,47 @@ fi
 
 if ! [ -d "$HOME/.dotnet" ];
 then
-    echo "DotNet isn't installed. Installing now for the current user..."
+    echo "DotNet isn't installed. Will be installed for the current user."
     echo ""
 
+    install_dotnet
 
+    if [ "$?" == "1" ];
+    then
+        abort "Try again."
+    fi
+fi
+
+
+if [ "$DOTNET_GCHeapHardLimit" == "" ] && 
+ ! [ "$ANDROID_DATA" == "" ] && [ "$TERMUX_VERSION" == "" ];
+then
+    echo "It seems we are in a Termux proot environment."
+    echo ""
+    echo "The variable DOTNET_GCHeapHardLimit needs to exported"
+    echo "in order to dotnet to work properly."
+    echo ""
+    echo "It will be added to your \~/.environment or \~/.bashrc"
+    echo "files now (.environment takes precedence if exists)"    
+    echo ""
+
+    if [ -f "$HOME/.environment" ];
+    then
+        grep -q DOTNET_GCHeapHardLimit "$HOME/.environment"
+
+        if [ "$?" == "1" ];
+        then
+            echo "export DOTNET_GCHeapHardLimit=1C000000" >> "$HOME/.environment"
+        fi
+
+    else
+        grep -q DOTNET_GCHeapHardLimit "$HOME/.bashrc"
+
+        if [ "$?" == "1" ];
+        then
+            echo "export DOTNET_GCHeapHardLimit=1C000000" >> "$HOME/.bashrc"
+        fi
+    fi
 fi
 
 
