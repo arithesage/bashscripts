@@ -1,0 +1,183 @@
+#!/bin/bash
+
+
+abort ()
+{
+    MESSAGE=$1
+
+    if ! [ "$MESSAGE" == "" ];
+    then
+        echo "$MESSAGE"
+        echo ""
+    fi
+
+    exit 1
+}
+
+
+create_build_script ()
+{
+    echo "#!/bin/bash" > build
+    echo "" >> build
+    echo "SCRIPT_DIR=\$(realpath \$(dirname \$0))" >> build
+    echo "" >> build
+    echo "dotnet build \"\$SCRIPT_DIR/$PROJECT_NAME.sln\"" >> build
+    echo "" >> build
+
+    chmod +x build
+}
+
+
+create_run_script ()
+{
+    echo "#!/bin/bash" > run
+    echo "" >> run
+    echo "SCRIPT_DIR=\$(realpath \$(dirname \$0))" >> run
+    echo "" >> run
+    echo "dotnet run --project \$SCRIPT_DIR" >> run
+    echo "" >> run
+
+    chmod +x run
+}
+
+
+usage ()
+{
+    echo "Usage: dotnet_init <project name> [project type]"
+    echo "       dotnet_init --project_types"
+    echo "       dotnet_init gen_run [TODO]"
+    echo "       dotnet_init gen_build [TODO]"
+    echo ""
+    echo "Creates a new project in the current folder, with the given name."
+    echo "The flag --project_types prints a list of the available projec types."
+    echo "The default project type is ConsoleApp."
+    echo ""
+}
+
+
+
+
+if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ];
+then
+    usage
+    abort
+fi
+
+
+if ! [ -d "$HOME/.dotnet" ];
+then
+    echo "DotNet isn't installed. Installing now for the current user..."
+    echo ""
+
+
+fi
+
+
+if [ "$1" == "--project_types" ];
+then
+    dotnet new list
+    abort
+fi
+
+
+PROJECT_NAME=$1
+PROJECT_TYPE=$2
+
+
+if [ -d "$PWD/$PROJECT_NAME" ];
+then
+    abort "A project '$PROJECT_NAME' already exists here."
+fi
+
+
+if ! [ "$PROJECT_TYPE" == "" ];
+then
+    dotnet new $PROJECT_TYPE -o "$PROJECT_NAME"
+
+else
+    dotnet new console -o "$PROJECT_NAME"
+fi
+
+
+if [ "$?" == "1" ];
+then
+    abort "Failed!"
+fi
+
+
+VSCODE_LAUNCH_JSON="$PWD/$PROJECT_NAME/.vscode/launch.json"
+VSCODE_TASKS_JSON="$PWD/$PROJECT_NAME/.vscode/tasks.json"
+
+
+if ! [ -f "$VSCODE_LAUNCH_JSON" ];
+then
+    mkdir -p "$(dirname $VSCODE_LAUNCH_JSON)"
+    
+    echo '{' >> $VSCODE_LAUNCH_JSON
+    echo '    "version": "0.2.0",' >> $VSCODE_LAUNCH_JSON
+    echo '    "configurations": [' >> $VSCODE_LAUNCH_JSON
+    echo '        {' >> $VSCODE_LAUNCH_JSON
+    echo '            "name": "Ejecutar con línea de comandos personalizada",' >> $VSCODE_LAUNCH_JSON
+    echo '            "type": "coreclr",' >> $VSCODE_LAUNCH_JSON
+    echo '            "request": "launch",' >> $VSCODE_LAUNCH_JSON
+    echo '            "preLaunchTask": "build",' >> $VSCODE_LAUNCH_JSON
+    echo '            "program": "${workspaceFolder}/bin/Debug/net8.0/TuProyecto.dll",' >> $VSCODE_LAUNCH_JSON
+    echo '            "args": [],' >> $VSCODE_LAUNCH_JSON
+    echo '            "cwd": "${workspaceFolder}",' >> $VSCODE_LAUNCH_JSON
+    echo '            "console": "integratedTerminal",' >> $VSCODE_LAUNCH_JSON
+    echo '            "stopAtEntry": false' >> $VSCODE_LAUNCH_JSON
+    echo '        }' >> $VSCODE_LAUNCH_JSON
+    echo '    ]' >> $VSCODE_LAUNCH_JSON
+    echo '}' >> $VSCODE_LAUNCH_JSON    
+fi
+
+
+if ! [ -f "$VSCODE_TASKS_JSON" ];
+then
+    mkdir -p "$(dirname $VSCODE_TASKS_JSON)"
+    
+    echo '{' >> $VSCODE_TASKS_JSON
+    echo '    "version": "2.0.0",' >> $VSCODE_TASKS_JSON
+    echo '    "tasks": [' >> $VSCODE_TASKS_JSON
+    echo '        {' >> $VSCODE_TASKS_JSON
+    echo '            "label": "build",' >> $VSCODE_TASKS_JSON
+    echo '            "command": "dotnet",' >> $VSCODE_TASKS_JSON
+    echo '            "type": "process",' >> $VSCODE_TASKS_JSON
+    echo '            "args": [' >> $VSCODE_TASKS_JSON
+    echo '                "build",' >> $VSCODE_TASKS_JSON
+    echo '                "${workspaceFolder}"' >> $VSCODE_TASKS_JSON
+    echo '            ],' >> $VSCODE_TASKS_JSON
+    echo '            "group": {' >> $VSCODE_TASKS_JSON
+    echo '                "kind": "build",' >> $VSCODE_TASKS_JSON
+    echo '                "isDefault": true' >> $VSCODE_TASKS_JSON
+    echo '            },' >> $VSCODE_TASKS_JSON
+    echo '            "problemMatcher": "$msCompile"' >> $VSCODE_TASKS_JSON
+    echo '        }' >> $VSCODE_TASKS_JSON
+    echo '    ]' >> $VSCODE_TASKS_JSON
+    echo '}' >> $VSCODE_TASKS_JSON
+fi
+
+
+cd "$PROJECT_NAME"
+
+
+echo "Generating solution..."
+dotnet new sln -n "$PROJECT_NAME"
+
+if [ "$?" == "1" ];
+then
+    abort "Failed!"
+fi
+
+dotnet sln add "$PROJECT_NAME.csproj"
+
+if [ "$?" == "0" ];
+then
+    echo ""
+    echo "All done!"
+fi
+
+
+create_build_script
+create_run_script
+
