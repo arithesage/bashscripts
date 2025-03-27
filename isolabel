@@ -1,0 +1,18 @@
+#!/bin/bash
+
+ISO=$1
+
+if [[ $ISO == *.cue ]] || [[ $ISO == *.CUE ]];
+then
+    cd-info "$ISO" | grep -m1 "Volume" | cut -d ':' -f 2 | xargs
+
+elif [[ $ISO == *.iso ]] || [[ $ISO == *.ISO ]];
+then
+    isoinfo -d -i "$ISO" | grep -m1 "Volume id:" | cut -d ':' -f 2 | xargs
+else
+    echo "I don't know how to extract the label from this image file."
+    echo ""
+
+    exit 1
+fi
+

@@ -1,0 +1,60 @@
+#!/bin/bash
+
+abort ()
+{
+    MESSAGE="$1"
+
+    if ! [ "$MESSAGE" == "" ];
+    then
+        echo "$MESSAGE"
+        echo ""
+    fi
+
+    exit 1
+}
+
+
+isolabel ()
+{
+    ISO=$1
+    
+    if [[ $ISO == *.cue ]] || [[ $ISO == *.CUE ]];
+    then
+        cd-info "$ISO" | grep -m1 "Volume" | cut -d ':' -f 2 | xargs
+
+    elif [[ $ISO == *.iso ]] || [[ $ISO == *.ISO ]];
+    then
+        isoinfo -d -i "$ISO" | grep -m1 "Volume id:" | cut -d ':' -f 2 | xargs
+    fi
+}
+
+
+IMAGE=$1
+IMAGE_LABEL=$(isolabel "$IMAGE")
+
+
+if [ "$IMAGE_LABEL" == "" ];
+then
+    IMAGE_LABEL="unnamed"
+fi
+
+MOUNT_POINT="/tmp/iso/$USER/$IMAGE_LABEL"
+
+
+if ! [ -d "$MOUNT_POINT" ];
+then
+    mkdir -p "$MOUNT_POINT"
+fi
+
+
+fuseiso "$IMAGE" "$MOUNT_POINT"
+
+
+if [ "$?" == "1" ];
+then
+    abort "Failed mounting ISO."
+fi
+
+echo "ISO mounted at '$MOUNT_POINT'."
+echo "Run 'fusermount -u $MOUNT_POINT' for unmount."
+echo ""
