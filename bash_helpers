@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 abort ()
 {
     MESSAGE=$1
@@ -12,12 +11,6 @@ abort ()
     fi
 
     exit 1
-}
-
-
-check_dependencies ()
-{
-    check_for /usr/bin/cd-info libcdio-utils
 }
 
 
@@ -57,27 +50,4 @@ install ()
     abort "Trying to install a unnamed package."
 }
 
-
-
-
-source $(realpath $(dirname $0))
-
-check_dependencies
-
-
-ISO=$1
-
-if [[ $ISO == *.cue ]] || [[ $ISO == *.CUE ]];
-then
-    cd-info "$ISO" | grep -m1 "Volume" | cut -d ':' -f 2 | xargs
-
-elif [[ $ISO == *.iso ]] || [[ $ISO == *.ISO ]];
-then
-    isoinfo -d -i "$ISO" | grep -m1 "Volume id:" | cut -d ':' -f 2 | xargs
-else
-    echo "I don't know how to extract the label from this image file."
-    echo ""
-
-    exit 1
-fi
 
