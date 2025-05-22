@@ -1,0 +1,52 @@
+#!/bin/bash
+
+SCRIPT_DIR=$(realpath $(dirname $0))
+
+
+
+
+export QVM_MACHINE="pc"
+export QVM_ARCH="i386"
+
+if [ "$QVM_CPU" == "" ];
+then
+    export QVM_CPU="pentium2"
+fi
+
+export QVM_CPU_SMP="1"
+export QVM_CPU_CORES="1"
+
+export QVM_DISABLE_KVM="0"
+
+if [ "$QVM_RAM" == "" ];
+then
+    export QVM_RAM="512M"
+fi
+
+#export QVM_DISPLAY="sdl,gl=on"
+export QVM_VIDEO_DEVICE="ati-vga"
+export QVM_AUDIO_DEVICE="sb16"
+export QVM_NETWORK_CARD="ne2k_pci"
+export QVM_INCLUDE_USB="1"
+export QVM_INCLUDE_NETWORK="1"
+
+if [ "$QVM_FORWARDED_PORTS" == "" ];
+then
+    export QVM_FORWARDED_PORTS="hostfwd=tcp::6022-:22"
+fi
+
+if [ "$QVM_EXTRA_DEVICES" == "" ];
+then
+    export QVM_EXTRA_DEVICES="-device usb-kbd -device usb-tablet"
+fi
+
+#export QVM_HDA="harddrives/Debian_12.qcow2"
+#export QVM_CDROM="iso/debian-12.9.0-amd64-netinst.iso"
+
+if [ "$QVM_BOOT_ORDER" == "" ];
+then
+    export QVM_BOOT_ORDER="dc"
+fi
+
+
+${SCRIPT_DIR}/boot_qemu_machine

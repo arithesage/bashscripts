@@ -18,6 +18,37 @@ function abort
 
 function print_opts
 {
+    echo "Available configuration options:"
+    echo ""
+    echo "- QVM_ARCH: Machine architecture (i386, x86_64, etc.)"
+    echo "- QVM_NAME: VM name"
+    echo "- QVM_MACHINE: Machine type"
+    echo "- QVM_MACHINE_OPTS: Comma-separated options."
+    echo "- QVM_DISABLE_KVM: Force disable KVM acceleration."
+    echo "- QVM_BIOS: BIOS image to use."
+    echo "- QVM_BIOS_PATH: Include this path in BIOS image search."
+    echo "- QVM_EFI: EFI image to use."
+    echo "- QVM_CPU: CPU name to use"
+    echo "- QVM_CPU_OPTS: Comma-separated options."
+    echo "- QVM_CPU_CORES: Desired CPU cores."
+    echo "- QVM_CPU_SMP: // TODO"
+    echo "- QVM_RAM: How much RAM will the VM have (16M, 2G, etc.)."
+    echo "- QVM_VIDEO_DEVICE: Graphics card to use"
+    echo "- QVM_VIDEO_OPTS: Comma-separated options."
+    echo "- QVM_VGA: Graphics card to use (simpler)"
+    echo "- QVM_AUDIO_DEVICE: Sound card."
+    echo "- QVM_AUDIO_OPTS: Comma-separated options."
+    echo "- QVM_EXTRA_DEVICES: Any extra device you want to add."
+    echo "- QVM_EXTRA_OPTS: Any extra option."
+    echo "- QVM_SHOW_CMDLINE: Set to '1' if you want to see it."
+    echo ""
+    echo "For knowing available values for each options, you can use"
+    echo "'qemu-system-{arch} -{qemu_option} help'"
+    echo ""
+    echo "The qemu_option usually is the same as the script option but"
+    echo "lowercase and removing QVM_: machine, cpu, vga, etc."
+    echo ""
+    echo "For the available devices use 'device'"
     echo ""
 }
 
@@ -25,6 +56,7 @@ function print_opts
 function usage
 {
     echo "Usage: [opts] boot_qemu_machine [-opts]"
+    echo ""
     echo "Launch a QEMU virtual machine."
     echo ""
     echo "To configure the VM, you need to export some environment variables"
@@ -34,7 +66,14 @@ function usage
     echo ""
     echo "You can also add whatever you want with the QVM_EXTRA_OPTS one."
     echo "Remember to separate each parameter with a space and every"
-    echo "parameter option with a comma." 
+    echo "parameter option with a comma."
+    echo ""
+    echo "Once the machine has started, press Ctl-Alt-2 for enter the console."
+    echo "Some useful commands you can enter here are:"
+    echo
+    echo "- info block (drives mounted)"
+    echo "- change <drive> <image path> (For swapping floppies and CD/DVD)"
+    echo "- shutdown (self-explained)"
     echo ""
 }
 
@@ -104,6 +143,11 @@ then
 
     QEMU_OPTS+=",accel=kvm "
 else
+    if [ "$QVM_DISABLE_KVM" == "1" ];
+    then
+        echo "KVM has been disabled."
+    fi
+
     QEMU_OPTS+=" "
 fi
 
@@ -220,8 +264,13 @@ then
 
     QEMU_OPTS+=" "
 
+elif ! [ "$QVM_VGA" == "" ];
+then
+    QEMU_OPTS+="-vga ${QEMU_VGA} "
+    echo "Using ${QEMU_VGA} as VGA."
+
 else
-    QEMU_OPTS+="-device VGA "
+    QEMU_OPTS+="-device std "
     echo "Using standard VGA."
 fi
 
@@ -346,6 +395,24 @@ then
     fi
 
     QEMU_OPTS+=",netdev=net0,id=net0 "
+fi
+
+
+if ! [ "$QVM_FLOPPY_A" == "" ];
+then
+    QEMU_OPTS+="-drive file=$QVM_FLOPPY_A"
+    QEMU_OPTS+=",format=raw,if=floppy,index=0 "
+
+    echo "Inserted '${QVM_FLOPPY_A}' in floppy drive A:"
+fi
+
+
+if ! [ "$QVM_FLOPPY_B" == "" ];
+then
+    QEMU_OPTS+="-drive file=$QVM_FLOPPY_B"
+    QEMU_OPTS+=",format=raw,if=floppy,index=1 "
+
+    echo "Inserted '${QVM_FLOPPY_B}' in floppy drive B:"
 fi
 
 
@@ -556,6 +623,8 @@ fi
 if ! [ "$QVM_BOOT_ORDER" = "" ];
 then
     QEMU_OPTS+="-boot ${QVM_BOOT_ORDER} "
+
+    echo ""
     echo "Boot secuence: ${QVM_BOOT_ORDER}."
 fi
 
